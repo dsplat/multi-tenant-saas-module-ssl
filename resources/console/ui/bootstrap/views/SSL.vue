@@ -30,23 +30,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
+import { useUserStore } from '@stores/user'
 
-const API = '/tenant/ssl'
+const userStore = useUserStore()
+const apiBase = computed(() => `/api/v1/tenants/${userStore.tenantId}/ssl`)
 const certInfo = ref<any>(null)
 const showUpload = ref(false)
 const uploadForm = ref({ certificate: '', private_key: '' })
 
-const fetchCert = async () => { try { const r = await axios.get(API); certInfo.value = r.data.data || r.data } catch { certInfo.value = null } }
+const fetchCert = async () => { try { const r = await axios.get(apiBase.value); certInfo.value = r.data.data || r.data } catch { certInfo.value = null } }
 
 const handleUpload = async () => {
-  try { await axios.post(API, uploadForm.value); showUpload.value = false; uploadForm.value = { certificate: '', private_key: '' }; await fetchCert() } catch {}
+  try { await axios.post(apiBase.value, uploadForm.value); showUpload.value = false; uploadForm.value = { certificate: '', private_key: '' }; await fetchCert() } catch {}
 }
 
 const handleDelete = async () => {
   if (!confirm('确定删除 SSL 证书？')) return
-  try { await axios.delete(API); await fetchCert() } catch {}
+  try { await axios.delete(apiBase.value); await fetchCert() } catch {}
 }
 
 onMounted(fetchCert)
